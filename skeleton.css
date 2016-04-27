@@ -407,7 +407,50 @@ hr {
 video {
    display: flex;
    justify-content: center;}
+ 
+.mail{
+ width: 40px;
+ height: 40px;
+ display: block;
+ background:transparent url('mail.png') center top no-repeat;
+}
 
+.mail:hover {
+   background-image: url('mailred.png');
+}
+
+.insta{
+ width: 40px;
+ height: 40px;
+ display: block;
+ background:transparent url('insta.png') center top no-repeat;
+}
+
+.insta:hover {
+   background-image: url('instayellow.png');
+}
+
+.vimeo{
+ width: 40px;
+ height: 40px;
+ display: block;
+ background:transparent url('vimeo.png') center top no-repeat;
+}
+
+.vimeo:hover {
+   background-image: url('vimeoblue.png');
+}
+
+.pdf{
+ width: 40px;
+ height: 40px;
+ display: block;
+ background:transparent url('pdf.png') center top no-repeat;
+}
+
+.pdf:hover {
+   background-image: url('pdfgreen.png');
+}
 
 /* Clearing
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
