@@ -407,6 +407,11 @@ hr {
 video {
    display: flex;
    justify-content: center;}
+   
+body:after{
+    position:absolute; z-index:-1;
+    content: url(mailred.png) url(instayellow.png) url(pdfgreen.png) url(vimeoblue.png);
+}
  
 .mail{
  width: 40px;
