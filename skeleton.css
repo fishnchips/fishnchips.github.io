@@ -407,7 +407,8 @@ hr {
 video {
    display: flex;
    justify-content: center;}
-   
+
+
 body:after{
     position:absolute; width:0; height:0; overflow:hidden; z-index:-1;
     content: url(mailred.png) url(instayellow.png) url(pdfgreen.png) url(vimeoblue.png);
