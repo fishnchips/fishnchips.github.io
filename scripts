@@ -1,0 +1,270 @@
+var comp = app.project.activeItem;
+
+    function fix(layer) {
+    
+        var saber = comp.selectedLayers[layer].Effects.property("Saber");
+        var arr = [ 15, 18, 29, 45, 60 ];
+        for (i = 1; i < saber.numProperties; i++) {
+            var currProp = saber.property(i);
+            if (currProp.canSetExpression && !check(i, arr) ) {
+                var expr = "thisComp.layer(\"SABER 2\").effect(\"Saber\")(" + i + ")";
+                currProp.expression = expr;
+            }
+        }
+    }
+    
+    function fixLayers() {
+        for (n = 0; n < comp.selectedLayers.length; n++) {
+            fix(n);
+        }
+        alert("DONE");
+    }
+    
+    function check(x, array) {
+        out = false;
+        for (var z = 0; z < array.length; z++) {
+            if (array[z] == x) {
+                out = true;
+                break;
+            } else { out = false; }
+        }
+    }
+fixLayers();
+
+__________
+
+{
+    var currentProject = (app.project) ? app.project : app.newProject();
+    var currentComp = currentProject.activeItem;
+    var originalComp = currentComp;
+    
+    var currentLayers = currentComp.layers;
+    var preComps = new Array();
+    var preComp;
+    var pos;
+    var posArray = new Array();
+    var rotArray = new Array();
+    var dPos = new Array();
+    var dRot = new Array();
+    
+    for (i = 1; i <= currentLayers.length; i++) {
+        preComp = currentLayers[i].source;
+        
+        if (preComp instanceof CompItem) {
+            preComps[preComps.length] = preComp;
+        }
+    }
+    
+    for ( x = 0; x <= precomps.length - 1; x++ ) {
+        for (n = 1; n <= preComps[x].numLayers; n++) {
+            pcLayer = preComps[x];
+            pcLayer.layer(n).copyToComp(originalComp);
+        }
+    }
+}
+
+__________
+
+clearOutput();
+
+function scriptUI() {
+    var win, but1;
+    
+    win = new Window("palette", "Find and Replace", undefinded, {resizeable:true,});
+    but1 = win.add("button", undefined, "Replace");
+    but1.onClick = rename;
+    win.center();
+    win.show();
+    
+    function rename(){
+    var myComp = app.project.activeItem;
+    if (myComp == null) {
+        alert("No comp selected.");
+    } else {
+        //Gather data
+        var myLayers = myComp.selectedLayers;
+        var myCompName = myComp.name;
+        var newName = "comp(\"saber_v01\")";
+        
+        //Check selected
+        if (myLayers.length < 1) { alert("No layers selected.");
+        ekse {
+        var changes = false;
+        app.beginUndoGroup("NotThisComp");
+        for (var l = 0; l < myLayers.length; l++) {
+            var myLayer = myLayers[l];
+            //Walk properties
+            if (myLayer.selectedProperties && myLayer.selectedProperties.length > 0) {
+                var selProps = myLayer.selectedProperties;
+                if ( changes == false ) { changes = 0; //For knowing props were selected }
+                for ( p = 0; p < selProps.length; p++) {
+                    var prop = selProps[p];
+                    if (prop.canSetExpression == true) {
+                        if (prop.expression.indexOf(newName) != -1) {
+                            prop.expression = prop.expression.split(newName).join("thisComp");
+                            changes++;
+                        }
+                    }
+                }
+            }
+        }
+        app.endUndoGroup();
+        
+        if (changes == false) { alert("No properties were selected."); }
+        else if (changes == 0) { alert("No instancces found."); }
+        else { alert("Replaced: " + changes);
+    
+    }
+    }
+    
+}
+scriptUI();
+
+__________
+
+{
+function myScript(thisObj) {
+    function myScript_buildUI(thisObj) {
+        var myPanel = (thisObj instanceof Panel) ? thisObj : new Window("palette", "Generate Hex Paths", undefined, {resizeable:true,} };
+        
+        res = "group{orientation: 'column', alignment:['fill', 'fill'], alignChildren:['fill', 'fill'],\
+            particleText: StaticText{text:'Particles'},\
+            particles: EditText{text:'10'},\
+            segmentText: StaticText{text:'Segments'},\
+            segments: EditText{text:'20'},\
+            radiusText: StaticText{text:'Radius'},\
+            radius: EditText{text:'20'},\
+            layerText: StaticText{text:'Layers'),\
+            layers: EditText{text:'1'},\
+            myButton: Button{text:'Generate'},\
+        }"
+        //Add resource string to panel
+        myPanel.grp = myPanel.add(res);
+        //Setup panel sizing and make panel resizeable
+        myPanel.layout.layout(true);
+        myPanel.grp.minimumSize = myPanel.grp.size;
+        myPanel.layout.resize();
+        myPanel.onResizing = myPanel.onResize = function () { this.layout.resize(); }
+        
+        parts = myPanel.grp.particles.text;
+        segs = myPanel.grp.segments.text;
+        rad = myPanel.grp.radius.text;
+        layers = myPanel.grp.layers.text;
+        
+        myPanel.grp.particles.onChange = updateParts;
+        myPanel.grp.segments.onChange = updateSegs;
+        myPanel.grp.radius.onChange = updateRad;
+        myPanel.grp.layers.onChange = updateLayers;
+        
+        myPanel.grp.myButton.onClick = run;
+        
+        return myPanel;
+    }
+    
+    function updateParts() { parts = this.text; }
+    function updateSegs() { segs = this.text; }
+    function updateRad() { rad = this.text; }
+    function updateLayers() { layers = this.text; }
+    function run() {for (z = 0; z < layers; z++) { main(); } }
+    
+    function main() {
+        var comp = app.project.activeItem;
+        if (comp.selectedLayers.length == 0) { createLayer(); }
+        
+        var shapeLayer = comp.selectedLayers[0]l;
+        
+        var segments = segs;
+        var particles = parts;
+        var curDir = 1;
+        var radius = rad;
+        var half = radius/2l
+        var rootThree = Math.sqrt(3) * half;
+        
+        function createLayer() {
+            comp.layers.addSolid([1, 1, 1], "Hex_Particles", comp.width. comp.height, 1.0, comp.duration);
+            var shapeLayer = comp.layers[1];
+            shaperLaayer.Effects.addProperty"Saber");
+            
+            var saber = shapeLayer.Effects.property("Saber");
+            
+            saber.property("Core type").setValue(2);
+            saber.property(23).setValue(0.9);
+            // ...etc...
+        }
+        
+        function nextDir ( prevDir ) {
+            out = 0;
+            
+            if (Math.random() < 0.5) { out = prevDir - 1; }
+            else { out = prevDir + 1; }
+            return out % 3;
+        }
+            
+        function nextPos(xPos, yPos, dir, inv) {
+            var nextPosX = xPos;
+            var nextPosY = yPos;
+            
+            var posArray = new Array();
+            
+            dx = 0;
+            dy = 0;
+            
+            if (dir == 0) { dx = radius; }
+            else {
+                dx = -half;
+                dy = rootThree;
+            }
+            if (dir == 2 || dir == -1) { dy *= -1; }
+            posArray.push(nextPosX + dx * inv);
+            posArray.push(nextPosy + dy * inv);
+            
+            return posArray;
+        }
+        function generatePath() {
+            var path = new Array();
+            var inv = 1;
+            var offset = 0;
+            
+            var curX = comp.width/2;
+            var curY = comp.height/2;
+            
+            for (i = 0; i < segments; i++) {
+                curDir = nextDir(curDir);
+                var pos = nextPos(curX, curY, curDir, inv);
+                
+                curX = pos[0];
+                curY = pos[1];
+                
+                path.push(pos);
+                
+                inv = -inv;
+            }
+            return path;
+        }
+        
+        function addPath() {
+            var myShape = new Shape();
+            var masks = shapeLayer.property("ADBE Mask Parade");
+            var mask = masks.addProperty("Mask");
+            
+            myShape.vertices = generatePath();
+            myShape.closed = false;
+            mask.property(1).setValue(myShape);
+        }
+        function addPaths() { for (n = 0; n < particles; n++) {addPath(); } }
+        
+        function run() {
+            addPaths();
+            shapeLayer.selected = false;
+        }
+        run();
+        }
+    var myScriptPal = myScript_buildUI(thisObj);
+    if ((myScriptPal != null) && (mScriptPal instance of Window)) {
+        myScriptPal.center();
+        myScriptPal.show();
+    
+    }
+}
+myScript(this)
+}
