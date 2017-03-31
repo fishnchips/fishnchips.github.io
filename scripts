@@ -342,3 +342,36 @@ function groupPaths(num) {
     layersToDelete.push(shapeLayer);
     shapeLayer.remove();
 }
+
+__________shapesToAnimatedPath
+
+var comp = app.project.activeItem;
+var layers = comp.selectedLayers;
+var mySolid = comp.layers.addSolid([1.0,1.0,1.0], "Paths Combined", comp.width, comp.height, 1);
+var shapeSequence = new Array();
+
+for (i = 0; i < layers.length; i++) {
+    shapeSequence.push(layers[i].property("ADBE Root Vectors Group").property(1).property("Contents").property("Path 1").property(2).value);
+}
+
+var newMask = mySolid.Masks.addProperty("Mask");
+var myMaskShape = newMask.property("maskShape");
+var myShape = new Shape();
+
+for (z = 0; z < shapeSequence.length; z++) {
+    myShape = shapeSequence[z];
+    var outShape = new Shape();
+    var outVerts = new Array();
+    //alert(myShape.vertices[0]);
+    for (x = 0; x < myShape.vertices.length; x++) {
+        var dVerts = new Array();
+        dVerts.push(myShape.vertices[x][0] += comp.width/2);
+        dVerts.push(myShape.vertices[x][1] += comp.height/2);
+        outVerts.push(dVerts);
+    }
+    //alert(myShape.vertices[0]);
+    myShape.vertices = outVerts;
+    myShape.closed = false;
+    myMaskShape.setValueAtTime(z * comp.frameDuration, myShape);
+}
+
