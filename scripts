@@ -1,3 +1,20 @@
+__________layerTreeResearch
+
+var comp = app.project.activeItem;
+var layers = comp.selectedLayers;
+
+if (layers.length > 0) {
+    var layer = layers;
+    var findings = layer[0].property("ADBE Root Vectors Group").property(1).name + ": \n";
+    
+    var deep = layer[0].property("ADBE Root Vectors Group").property(1).property(3);
+    
+    for (i = 0; i < deep.numProperties; i++) {
+        findings += deep.name + ": " + deep.property(1 + i).name + "\n";
+    }
+    alert(findings);
+}
+
 __________linkSaberToOne
 
 var comp = app.project.activeItem;
