@@ -1,3 +1,5 @@
+__________linkSaberToOne
+
 var comp = app.project.activeItem;
 
     function fix(layer) {
@@ -31,7 +33,7 @@ var comp = app.project.activeItem;
     }
 fixLayers();
 
-__________
+__________extractLayers
 
 {
     var currentProject = (app.project) ? app.project : app.newProject();
@@ -63,7 +65,7 @@ __________
     }
 }
 
-__________
+__________expressionReplace
 
 clearOutput();
 
@@ -120,7 +122,7 @@ function scriptUI() {
 }
 scriptUI();
 
-__________
+__________genHexUI
 
 {
 function myScript(thisObj) {
@@ -267,4 +269,76 @@ function myScript(thisObj) {
     }
 }
 myScript(this)
+}
+
+__________organizeShapesByVerts
+
+var comp = app.project.activeItem;
+var layers = comp.selectedLayers;
+
+var nullGroups = new Array();
+
+for (i = 0; i < layers.length; i++) {
+    var shape = layers[i].property("ADBE Root Vectors Group").property(1).property("Contents").property(1);
+    var numVerts = shpe.property(2).value.vertices.length;
+    
+    if (!check(numVerts, nullGroups)) {
+        var newNull = comp.layers.addNull();
+        newNull.name = numVerts + " VERTS";
+    }
+}
+
+function check(x, array)
+
+__________renameToFrames
+
+var comp = app.project.activeItem;
+var layers = comp.selectedLayers;
+
+app.beginUndoGroup("HAH");
+for (i = 0; i < layers.length; i++) {
+    layers[i].name = "Frame_" + i;
+}
+app.endUndoGroup();
+
+__________separatePaths
+
+var comp = app.project.activeItem;
+var counter = 0;
+var initLayersNum = comp.selectedLayers.length;
+var initLayers = comp.selectedLayers;
+
+alert("Init: " + initLayersNum);
+
+if (comp.selectedLayers.length == 0) {
+    alert("NO SHAPES DUDE");
+}
+else {
+    app.beginUndoGroup("NO");
+    for( x = 0; x < initLayersNum; x++) {
+        groupPaths(x);
+    }
+    app.endUndoGroup();
+}
+
+function groupPaths(num) {
+    var shapeLayer = initLayers[num];
+    shapeLayer.property("ADBE Root Vectors Group").property(1).property("Contents").property("Merge Paths").remove();
+    
+    var numPaths = shapeLayer.property("ADBE Root Vectors Group").property(1).property("Contents").numProperties;
+    
+    var rootGroup = shapeLayer.content("Group 1");
+    
+    for(var j = 1; j < numPaths; j++) {
+        var dupeLayer = shapeLayer.duplicate();
+        dupeLayer.name = shapeLayer.name + "_String_" = j;
+        
+        for (var i = 1; i < numPaths; i++) {
+            if (i != j) {
+                dupeLayer.property("ADBE Root Vectors Group").property(1).property("Contents").property("Path " + i).remove();
+            }
+        }
+    }
+    layersToDelete.push(shapeLayer);
+    shapeLayer.remove();
 }
