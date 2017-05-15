@@ -1,0 +1,269 @@
+function myScript(thisObj) { 
+  function myScript_buildUI(thisObj) {
+  var myPanel = (thisObj instanceof Panel) ? thisObj : new Window("palette", "Blast FXer", undefined, {resizeable:true,});
+  
+  res = "group{orientation:'column', alignment:['fill', 'fill'], alignChildren:['fill', 'fill'],\
+          renameLayersButton: Button{text:'Rename Layers'},\
+          sepPathsButton: Button{text:'Separate Paths'},\
+          sortByStringsButton: Button{text:'Sort by String'},\
+          shapesToPathsButton: Button{text:'Shapes to Masks'},\
+          extrLayersButton: Button{text:'Extract Layers'},\
+          saberLinkButton: Button{text:'Link Sabers'},\
+      }"
+      
+  myPanel.grp = myPanel.add(res);
+  myPanel.layout.layout(true);
+  myPanel.grp.minimumSize = myPanel.grp.size;
+  myPanel.layout.resize();
+  myPanel.onResizing = myPanel.onResize = function () {this.layout.resize();}
+  
+  myPanel.grp.renameLayersButton.onClick = renameLayers;
+  myPanel.grp.sepPathsButton.onClick = separatePaths;
+  myPanel.grp.shapesToPathsButton.onClick = shapesToMasks;
+  myPanel.grp.sortByStringButton.onClick = sortByString;
+  myPanel.grp.extrLayersButton.onClick = extractLayers;
+  myPanel.grp.saberLinkButton.onClick = saberLinker;
+  
+  return myPanel;
+  }
+  var myScriptPal = myScript_buildUI(thisObj);
+  
+  if ((myScriptPal != null) && (myScriptPal instanceof Window)) {
+    myScriptPal.center();
+    myScriptPal.show();
+  }
+} myScript(this);
+
+
+
+//RENAME LAYERS
+// Make Parser more flexible, start with frame number
+// Change naming convention
+function renameLayers() {
+  var comp = app.project.activeItem;
+  var layers = comp.selectedLayers;
+
+  app.beginUndoGroup("HAH");
+  for (i = 0; i < layers.length; i++) {
+      var iName = layers[i].name;
+      var frame = iName.split(" ")[0].split("_")[3];
+      layers[i].name = "Frame_" + frame;
+  }
+  app.endUndoGroup();
+}
+
+
+
+//SEPARATE PATHS
+function separatePaths() {
+  var comp = app.project.activeItem;
+  var counter = 0;
+  var initLayersNum = comp.selectedLayers.length;
+  var initLayers = comp.selectedLayers;
+  var layersToDelete = new Array();
+
+  if (comp.selectedLayers.length == 0) {
+      alert("NO SHAPES DUDE");
+  }
+  else {
+      app.beginUndoGroup("NO");
+      for( x = 0; x < initLayersNum; x++) {
+          groupPaths(x);
+          counter++;
+      }
+      app.endUndoGroup();
+  }
+
+  function groupPaths(num) {
+      var shapeLayer = initLayers[num];
+      if (shapeLayer.property("ADBE Root Vectors Group").property(1).property("Contents").property("Merge Paths")) {
+        shapeLayer.property("ADBE Root Vectors Group").property(1).property("Contents").property("Merge Paths").remove();
+      };
+
+      var numPaths = shapeLayer.property("ADBE Root Vectors Group").property(1).property("Contents").numProperties;
+      var rootGroup = shapeLayer.content("Group 1");
+
+      for(var j = 1; j < numPaths; j++) {
+          var dupeLayer = shapeLayer.duplicate();
+          dupeLayer.name = shapeLayer.name + "_String_" = j;
+
+          for (var i = 1; i < numPaths; i++) {
+              if (i != j) {
+                  dupeLayer.property("ADBE Root Vectors Group").property(1).property("Contents").property("Path " + i).remove();
+              }
+          }
+      }
+      layersToDelete.push(shapeLayer);
+      shapeLayer.remove();
+}
+
+//ALL SHAPES TO MASKS
+
+function sortByString() {
+  var comp = app.project.activeItem;
+  var layers = comp.selectedLayers;
+
+  var nullGroups = new Array();
+
+  for (i = 0; i < layers.length; i++) {
+      var shape = layers[i].property("ADBE Root Vectors Group").property(1).property("Contents").property(1);
+      var numVerts = layers[i].name.split("_")[3];
+
+      if (!check(numVerts, nullGroups)) {
+          var newNull = comp.layers.addNull();
+          newNull.name = numVerts + " VERTS";
+      }
+      
+      layers[i].moveBefore(comp.layer(numVerts + "th String"));
+      nullGroups.push(numVerts);
+  }
+
+  function check(x, array) {
+    out = false;
+    for (var z = 0; z < array.length; z++) {
+      if (array[z] == x) {
+        out = true;
+        break;
+      } else { out = false; }
+    }
+    return out;
+  }
+}
+  
+  
+//SHAPE PATHS TO MASKS
+//Edit offset, make variable?
+function shapesToMasks() {
+  var comp = app.project.activeItem;
+  var layers = comp.selectedLayers;
+  var name = layers[0].name.split("_")[3];
+  var mySolid = comp.layers.addSolid([1.0,1.0,1.0], "String " + name + " Paths", comp.width, comp.height, 1);
+  var shapeSequence = new Array();
+
+  mySolid.Effects.addProperty("Saber");
+  mySolid.effects.property("Saber").property("Core Type").setValue(2);
+  
+  for (i = 0; i < layers.length; i++) {
+    var nameData = layers[i].name.split("_");
+    shapeSequence.push(layers[i].property("ADBE Root Vectors Group").property(1).property("Contents").property("Path " + parseInt(nameData[3])).property(2).value);
+  }
+
+  var newMask = mySolid.Masks.addProperty("Mask");
+  var myMaskShape = newMask.property("maskShape");
+  var worldShift = [comp.width/2, comp.height/2];
+  var worldShift = [0, 0];
+  
+  var wX = worldShift[0];
+  var wY = worldShift[1];
+  
+  //var myShape = new Shape();
+
+  for (z = 0; z < shapeSequence.length; z++) {
+    var myShape = shapeSequence[z];
+    var outShape = new Shape();
+    var outVerts = new Array();
+    var frame = layers[z].name.split("_")[1] - 174;
+      
+    var anchor = layers[z].property("Contents").property(1).property("Transform").property("Position").value;
+    for (x = 0; x < myShape.vertices.length; x++) {
+      var dVerts = new Array();
+      dVerts.push(myShape.vertices[x][0] += anchor[0]);
+      dVerts.push(myShape.vertices[x][1] += anchor[1]);
+      outVerts.push(dVerts);
+    }
+    //alert(myShape.vertices[0]);
+    myShape.vertices = outVerts;
+    myShape.closed = false;
+    myMaskShape.setValueAtTime(frame * comp.frameDuration, myShape);
+  }
+}
+
+//EXTRACT LAYERS
+function extractLaters() {
+    var currentProject = (app.project) ? app.project : app.newProject();
+    var currentComp = currentProject.activeItem;
+    var originalComp = currentComp;
+    
+    var currentLayers = currentComp.layers;
+    var preComps = new Array();
+    var preComp;
+    var pos;
+    var posArray = new Array();
+    var rotArray = new Array();
+    var dPos = new Array();
+    var dRot = new Array();
+    
+    for (i = 1; i <= currentLayers.length; i++) {
+        preComp = currentLayers[i].source;
+        
+        if (preComp instanceof CompItem) {
+            preComps[preComps.length] = preComp;
+        }
+    }
+    
+    for ( x = 0; x <= precomps.length - 1; x++ ) {
+        for (n = 1; n <= preComps[x].numLayers; n++) {
+            pcLayer = preComps[x];
+            var isShape = pcLayer.layer(n) instanceof ShapeLayer;
+            var isComp = pcLayer.layer(n) instanceof CompItem;
+            if (!isShape && !isComp) {
+              pcLayer.layer(n).copyToComp(originalComp);
+            }
+        }
+    }
+}
+
+
+
+//SABER LINKER
+//Turn into effect linker, link to first layer, link to target layer, input: comp/layer name
+//Create ctrl later
+//Skip parameters if wanted
+
+function saberLinker() {
+  var comp = app.project.activeItem;
+  var paths = new Array();
+  for (x = 0; x < comp.selectedLayers.length; x++ ) {
+    paths.push(comp.selectedLayers[x]);
+  }
+  
+  var mySolid = comp.layers.addSolid([0.0,0.0,0.0], "SABER_CONTROL", comp.width, comp.height, 1);
+  
+  mySolid.guideLayer = true;
+  mySolid.Effects.addProperty("Saber");
+  mySolid.Effects.property("Saber.property(11).setValue(2);
+  mySolid.Effects.property("Saber.property(89).setValue(1);
+  mySolid.Effects.property("Saber.property(8).setValue([comp.width*0.1, comp.height*0.9]);
+  mySolid.Effects.property("Saber.property(9).setValue([comp.width*0.1, comp.height*0.1]);
+  
+  function fix(layer) {
+    var saber = paths[layer].Effects.property("Saber");
+    var arr = [ 8, 9, 15, 18, 29, 45, 60 ];
+    for (i = 1; i < saber.numProperties; i++) {
+      var currProp = saber.property(i);
+      if (currProp.canSetExpression && !check(i, arr) ) {
+        var expr = "thisComp.layer(\"SABER_CONTROL\").effect(\"Saber\")(" + i + ")";
+        currProp.expression = expr;
+      }
+    }
+  }
+    
+  function fixLayers() {
+    for (n = 0; n < paths.length; n++) {
+      fix(n);
+    }
+  }
+  function check(x, array) {
+    out = false;
+    for (var z = 0; z < array.length; z++) {
+      if (array[z] == x) {
+        out = true;
+        break;
+      } else { out = false; }
+    }
+    return out;
+  }
+  fixLayers();
+}
+  
+  
